@@ -1,21 +1,22 @@
 import streamlit as st
 import whisper
 from deep_translator import GoogleTranslator
-from moviepy.editor import (
-    VideoFileClip,
-    AudioFileClip,
-    CompositeAudioClip
-)
+
+from moviepy.editor import VideoFileClip
+from moviepy.editor import AudioFileClip
+from moviepy.editor import CompositeAudioClip
+
 import edge_tts
 import asyncio
 import os
 import tempfile
 import uuid
+
 from pydub import AudioSegment
 from pydub.effects import normalize
 
 # ======================================================
-# CONFIGURACIÓN PRO
+# CONFIGURACIÓN GENERAL
 # ======================================================
 
 st.set_page_config(
@@ -32,6 +33,7 @@ st.subheader("🔥 Doblaje IA profesional con voz original")
 # ======================================================
 
 idiomas = {
+
     "🇺🇸 Inglés": "en",
     "🇪🇸 Español": "es",
     "🇫🇷 Francés": "fr",
@@ -52,6 +54,7 @@ idiomas = {
     "🇬🇷 Griego": "el",
     "🇹🇭 Tailandés": "th",
     "🇻🇳 Vietnamita": "vi"
+
 }
 
 # ======================================================
@@ -101,6 +104,7 @@ voces = {
 
     "🔥 Mujer Coreana":
     "ko-KR-SunHiNeural"
+
 }
 
 # ======================================================
@@ -157,7 +161,7 @@ velocidad_voz = st.slider(
     "⚡ Velocidad voz IA",
     -50,
     50,
-    -10
+    -15
 )
 
 modelo_whisper = st.selectbox(
@@ -165,14 +169,13 @@ modelo_whisper = st.selectbox(
     [
         "tiny",
         "base",
-        "small",
-        "medium"
+        "small"
     ],
-    index=2
+    index=1
 )
 
 # ======================================================
-# GENERAR AUDIO IA
+# FUNCIÓN GENERAR AUDIO IA
 # ======================================================
 
 async def generar_audio(texto, voz, salida, velocidad):
@@ -187,7 +190,7 @@ async def generar_audio(texto, voz, salida, velocidad):
     await communicate.save(salida)
 
 # ======================================================
-# PROCESAR
+# PROCESAMIENTO
 # ======================================================
 
 if uploaded_file is not None:
@@ -202,7 +205,11 @@ if uploaded_file is not None:
 
         try:
 
-            with st.spinner("🔥 Procesando video IA PRO..."):
+            with st.spinner("🔥 Procesando video IA..."):
+
+                # ==================================================
+                # CREAR CARPETA TEMPORAL
+                # ==================================================
 
                 temp_dir = tempfile.mkdtemp()
 
@@ -218,7 +225,7 @@ if uploaded_file is not None:
                 # EXTRAER AUDIO
                 # ==================================================
 
-                st.info("🎧 Extrayendo audio...")
+                st.info("🎧 Extrayendo audio del video...")
 
                 video = VideoFileClip(video_path)
 
@@ -227,10 +234,13 @@ if uploaded_file is not None:
                     "audio.wav"
                 )
 
-                video.audio.write_audiofile(audio_path)
+                video.audio.write_audiofile(
+                    audio_path,
+                    logger=None
+                )
 
                 # ==================================================
-                # TRANSCRIPCIÓN IA
+                # TRANSCRIBIR AUDIO
                 # ==================================================
 
                 st.info("🧠 Transcribiendo IA...")
@@ -248,13 +258,14 @@ if uploaded_file is not None:
                 st.success("✅ Texto detectado")
 
                 with st.expander("📝 Ver texto original"):
+
                     st.write(texto_original)
 
                 # ==================================================
-                # TRADUCCIÓN
+                # TRADUCIR TEXTO
                 # ==================================================
 
-                st.info("🌍 Traduciendo...")
+                st.info("🌍 Traduciendo texto...")
 
                 texto_traducido = GoogleTranslator(
                     source="auto",
@@ -264,6 +275,7 @@ if uploaded_file is not None:
                 st.success("✅ Traducción completada")
 
                 with st.expander("🌍 Ver traducción"):
+
                     st.write(texto_traducido)
 
                 # ==================================================
@@ -328,26 +340,33 @@ if uploaded_file is not None:
 
                     final_audio = audio_ia
 
+                # ==================================================
+                # CREAR VIDEO FINAL
+                # ==================================================
+
                 final_video = video.set_audio(
                     final_audio
                 )
 
-                # ==================================================
-                # EXPORTAR
-                # ==================================================
-
                 output_path = os.path.join(
                     temp_dir,
-                    "doblaje_pro_max.mp4"
+                    "doblaje_final.mp4"
                 )
+
+                st.info("📦 Exportando video final...")
 
                 final_video.write_videofile(
                     output_path,
                     codec="libx264",
                     audio_codec="aac",
                     preset="ultrafast",
-                    threads=4
+                    threads=2,
+                    logger=None
                 )
+
+                # ==================================================
+                # RESULTADO
+                # ==================================================
 
                 st.success("🎉 DOBLAJE COMPLETADO")
 
