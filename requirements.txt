@@ -3,3 +3,5 @@ openai-whisper
 moviepy
 deep-translator
 gTTS
+ffmpeg-python
+torch
