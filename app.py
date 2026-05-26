@@ -5,13 +5,13 @@ from deep_translator import GoogleTranslator
 from gtts import gTTS
 import os
 
-st.title("🎬 Doblador de Video Automático - Androidetv")
+st.title("🎬 Automatic Video Dubbing - Androidetv")
 
-video_file = st.file_uploader("Sube tu video para procesar", type=['mp4', 'mov', 'avi'])
-idioma = st.selectbox("Selecciona el idioma de destino", ["en", "fr", "pt", "de", "it"])
+video_file = st.file_uploader("Upload your video to process", type=['mp4', 'mov', 'avi'])
+idioma = st.selectbox("Select target language", ["en", "fr", "pt", "de", "it"])
 
-if video_file and st.button("Empezar Doblaje"):
-    with st.spinner("Procesando... esto puede tardar unos minutos."):
+if video_file and st.button("Start Dubbing"):
+    with st.spinner("Processing... this may take a few minutes."):
         with open("temp_video.mp4", "wb") as f:
             f.write(video_file.read())
 
@@ -30,4 +30,4 @@ if video_file and st.button("Empezar Doblaje"):
         
         st.video("video_doblado.mp4")
         with open("video_doblado.mp4", "rb") as file:
-            st.download_button("Descargar Video Doblado", file, "video_listo.mp4")
+            st.download_button("Download Dubbed Video", file, "video_listo.mp4")
