@@ -1,130 +1,164 @@
 import streamlit as st
 import whisper
 from deep_translator import GoogleTranslator
-from moviepy.editor import VideoFileClip, AudioFileClip
+from moviepy.editor import (
+    VideoFileClip,
+    AudioFileClip,
+    CompositeAudioClip
+)
 import edge_tts
 import asyncio
 import os
 import tempfile
 import uuid
+from pydub import AudioSegment
+from pydub.effects import normalize
 
-# ==========================================
-# CONFIGURACIÓN
-# ==========================================
+# ======================================================
+# CONFIGURACIÓN PRO
+# ======================================================
 
 st.set_page_config(
-    page_title="ANDROIDETV AI DUBBING PRO",
+    page_title="ANDROIDETV AI DUBBING PRO MAX",
     page_icon="🎬",
     layout="wide"
 )
 
-st.title("🎬 ANDROIDETV AI DUBBING PRO")
-st.subheader("🔥 Doblaje automático viral para redes sociales")
+st.title("🎬 ANDROIDETV AI DUBBING PRO MAX")
+st.subheader("🔥 Doblaje IA profesional con voz original")
 
-# ==========================================
-# LISTA COMPLETA DE IDIOMAS
-# ==========================================
+# ======================================================
+# IDIOMAS
+# ======================================================
 
 idiomas = {
     "🇺🇸 Inglés": "en",
     "🇪🇸 Español": "es",
     "🇫🇷 Francés": "fr",
     "🇩🇪 Alemán": "de",
-    "🇵🇹 Portugués": "pt",
     "🇮🇹 Italiano": "it",
-    "🇷🇺 Ruso": "ru",
+    "🇵🇹 Portugués": "pt",
     "🇯🇵 Japonés": "ja",
     "🇰🇷 Coreano": "ko",
     "🇨🇳 Chino": "zh-cn",
     "🇸🇦 Árabe": "ar",
     "🇮🇳 Hindi": "hi",
+    "🇷🇺 Ruso": "ru",
     "🇹🇷 Turco": "tr",
-    "🇵🇱 Polaco": "pl",
     "🇳🇱 Holandés": "nl",
-    "🇺🇦 Ucraniano": "uk",
+    "🇵🇱 Polaco": "pl",
     "🇸🇪 Sueco": "sv",
-    "🇩🇰 Danés": "da",
     "🇫🇮 Finlandés": "fi",
     "🇬🇷 Griego": "el",
     "🇹🇭 Tailandés": "th",
-    "🇻🇳 Vietnamita": "vi",
-    "🇮🇩 Indonesio": "id",
-    "🇲🇾 Malayo": "ms",
-    "🇨🇿 Checo": "cs",
-    "🇷🇴 Rumano": "ro",
-    "🇭🇺 Húngaro": "hu",
-    "🇧🇬 Búlgaro": "bg",
-    "🇭🇷 Croata": "hr",
-    "🇸🇰 Eslovaco": "sk",
-    "🇸🇮 Esloveno": "sl"
+    "🇻🇳 Vietnamita": "vi"
 }
 
-# ==========================================
-# VOCES VIRALES IA
-# ==========================================
+# ======================================================
+# VOCES IA
+# ======================================================
 
 voces = {
 
-    "👨 Hombre Viral Español": "es-ES-AlvaroNeural",
-    "👩 Mujer Viral Español": "es-ES-ElviraNeural",
+    "🔥 Hombre Viral Español":
+    "es-ES-AlvaroNeural",
 
-    "👨 Hombre TikTok Inglés": "en-US-GuyNeural",
-    "👩 Mujer TikTok Inglés": "en-US-JennyNeural",
+    "🔥 Mujer Viral Español":
+    "es-ES-ElviraNeural",
 
-    "👨 Hombre Narrador": "en-US-DavisNeural",
-    "👩 Mujer Podcast": "en-US-AriaNeural",
+    "🔥 Hombre TikTok Inglés":
+    "en-US-GuyNeural",
 
-    "👨 Hombre Francés": "fr-FR-HenriNeural",
-    "👩 Mujer Francesa": "fr-FR-DeniseNeural",
+    "🔥 Mujer TikTok Inglés":
+    "en-US-JennyNeural",
 
-    "👨 Hombre Alemán": "de-DE-ConradNeural",
-    "👩 Mujer Alemana": "de-DE-KatjaNeural",
+    "🔥 Hombre Francés":
+    "fr-FR-HenriNeural",
 
-    "👨 Hombre Portugués": "pt-BR-AntonioNeural",
-    "👩 Mujer Portuguesa": "pt-BR-FranciscaNeural",
+    "🔥 Mujer Francesa":
+    "fr-FR-DeniseNeural",
 
-    "👨 Hombre Japonés": "ja-JP-KeitaNeural",
-    "👩 Mujer Japonesa": "ja-JP-NanamiNeural",
+    "🔥 Hombre Alemán":
+    "de-DE-ConradNeural",
 
-    "👨 Hombre Coreano": "ko-KR-InJoonNeural",
-    "👩 Mujer Coreana": "ko-KR-SunHiNeural"
+    "🔥 Mujer Alemana":
+    "de-DE-KatjaNeural",
+
+    "🔥 Hombre Portugués":
+    "pt-BR-AntonioNeural",
+
+    "🔥 Mujer Portuguesa":
+    "pt-BR-FranciscaNeural",
+
+    "🔥 Hombre Japonés":
+    "ja-JP-KeitaNeural",
+
+    "🔥 Mujer Japonesa":
+    "ja-JP-NanamiNeural",
+
+    "🔥 Hombre Coreano":
+    "ko-KR-InJoonNeural",
+
+    "🔥 Mujer Coreana":
+    "ko-KR-SunHiNeural"
 }
 
-# ==========================================
+# ======================================================
 # SUBIR VIDEO
-# ==========================================
+# ======================================================
 
 uploaded_file = st.file_uploader(
     "📤 Sube tu video",
     type=["mp4", "mov", "avi", "mkv"]
 )
 
-# ==========================================
+# ======================================================
 # OPCIONES
-# ==========================================
+# ======================================================
 
 col1, col2 = st.columns(2)
 
 with col1:
 
     idioma_nombre = st.selectbox(
-        "🌍 Idioma de traducción",
+        "🌍 Idioma destino",
         list(idiomas.keys())
     )
 
 with col2:
 
     voz_nombre = st.selectbox(
-        "🎤 Voz IA Viral",
+        "🎙️ Voz IA",
         list(voces.keys())
     )
 
 target_lang = idiomas[idioma_nombre]
 voz = voces[voz_nombre]
 
-# ==========================================
-# MODELO WHISPER
-# ==========================================
+# ======================================================
+# OPCIONES PRO
+# ======================================================
+
+st.subheader("⚙️ Opciones PRO")
+
+mantener_original = st.checkbox(
+    "🎧 Mantener voz original de fondo",
+    value=True
+)
+
+volumen_original = st.slider(
+    "🔉 Volumen voz original",
+    0.0,
+    1.0,
+    0.20
+)
+
+velocidad_voz = st.slider(
+    "⚡ Velocidad voz IA",
+    -50,
+    50,
+    -10
+)
 
 modelo_whisper = st.selectbox(
     "🧠 Calidad IA",
@@ -133,48 +167,38 @@ modelo_whisper = st.selectbox(
         "base",
         "small",
         "medium"
-    ]
+    ],
+    index=2
 )
 
-# ==========================================
-# OPCIONES PRO
-# ==========================================
+# ======================================================
+# GENERAR AUDIO IA
+# ======================================================
 
-st.subheader("⚙️ Opciones PRO")
-
-mantener_audio_original = st.checkbox(
-    "🔊 Mantener sonido original bajo la voz",
-    value=True
-)
-
-# ==========================================
-# EDGE TTS
-# ==========================================
-
-async def generar_audio(texto, voz, salida):
+async def generar_audio(texto, voz, salida, velocidad):
 
     communicate = edge_tts.Communicate(
         text=texto,
         voice=voz,
-        rate="+0%",
+        rate=f"{velocidad}%",
         pitch="+0Hz"
     )
 
     await communicate.save(salida)
 
-# ==========================================
-# PROCESAMIENTO
-# ==========================================
+# ======================================================
+# PROCESAR
+# ======================================================
 
 if uploaded_file is not None:
 
     st.video(uploaded_file)
 
-    duracion_mb = uploaded_file.size / (1024 * 1024)
+    size_mb = uploaded_file.size / (1024 * 1024)
 
-    st.info(f"📦 Tamaño del video: {duracion_mb:.2f} MB")
+    st.info(f"📦 Tamaño del video: {size_mb:.2f} MB")
 
-    if st.button("🚀 GENERAR DOBLAJE PRO"):
+    if st.button("🚀 GENERAR DOBLAJE PRO MAX"):
 
         try:
 
@@ -190,6 +214,10 @@ if uploaded_file is not None:
                 with open(video_path, "wb") as f:
                     f.write(uploaded_file.read())
 
+                # ==================================================
+                # EXTRAER AUDIO
+                # ==================================================
+
                 st.info("🎧 Extrayendo audio...")
 
                 video = VideoFileClip(video_path)
@@ -199,9 +227,11 @@ if uploaded_file is not None:
                     "audio.wav"
                 )
 
-                video.audio.write_audiofile(
-                    audio_path
-                )
+                video.audio.write_audiofile(audio_path)
+
+                # ==================================================
+                # TRANSCRIPCIÓN IA
+                # ==================================================
 
                 st.info("🧠 Transcribiendo IA...")
 
@@ -218,8 +248,11 @@ if uploaded_file is not None:
                 st.success("✅ Texto detectado")
 
                 with st.expander("📝 Ver texto original"):
-
                     st.write(texto_original)
+
+                # ==================================================
+                # TRADUCCIÓN
+                # ==================================================
 
                 st.info("🌍 Traduciendo...")
 
@@ -231,10 +264,13 @@ if uploaded_file is not None:
                 st.success("✅ Traducción completada")
 
                 with st.expander("🌍 Ver traducción"):
-
                     st.write(texto_traducido)
 
-                st.info("🎤 Generando voz IA viral...")
+                # ==================================================
+                # GENERAR VOZ IA
+                # ==================================================
+
+                st.info("🎙️ Generando voz IA...")
 
                 voz_generada = os.path.join(
                     temp_dir,
@@ -245,33 +281,64 @@ if uploaded_file is not None:
                     generar_audio(
                         texto_traducido,
                         voz,
-                        voz_generada
+                        voz_generada,
+                        velocidad_voz
                     )
+                )
+
+                # ==================================================
+                # NORMALIZAR AUDIO
+                # ==================================================
+
+                sonido = AudioSegment.from_file(
+                    voz_generada
+                )
+
+                sonido = normalize(sonido)
+
+                sonido.export(
+                    voz_generada,
+                    format="mp3"
                 )
 
                 st.success("✅ Voz IA creada")
 
-                st.info("🎬 Creando video doblado...")
+                # ==================================================
+                # CREAR AUDIO FINAL
+                # ==================================================
 
-                nuevo_audio = AudioFileClip(
+                st.info("🎬 Creando doblaje final...")
+
+                audio_ia = AudioFileClip(
                     voz_generada
                 )
 
-                if mantener_audio_original:
+                if mantener_original:
 
-                    final_video = video.set_audio(
-                        nuevo_audio
+                    audio_original = video.audio.volumex(
+                        volumen_original
                     )
+
+                    final_audio = CompositeAudioClip([
+                        audio_original,
+                        audio_ia
+                    ])
 
                 else:
 
-                    final_video = video.set_audio(
-                        nuevo_audio
-                    )
+                    final_audio = audio_ia
+
+                final_video = video.set_audio(
+                    final_audio
+                )
+
+                # ==================================================
+                # EXPORTAR
+                # ==================================================
 
                 output_path = os.path.join(
                     temp_dir,
-                    "doblado_final.mp4"
+                    "doblaje_pro_max.mp4"
                 )
 
                 final_video.write_videofile(
@@ -291,7 +358,7 @@ if uploaded_file is not None:
                     st.download_button(
                         "⬇️ DESCARGAR VIDEO DOBLADO",
                         file,
-                        file_name="ANDROIDETV_DOBLADO_PRO.mp4",
+                        file_name="ANDROIDETV_DOBLAJE_PRO_MAX.mp4",
                         mime="video/mp4"
                     )
 
