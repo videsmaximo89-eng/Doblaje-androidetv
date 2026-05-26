@@ -1,13 +1,10 @@
-streamlit==1.35.0
+streamlit
 openai-whisper
 deep-translator
 moviepy==1.0.3
 edge-tts
-pydub
-ffmpeg-python
 imageio
 imageio-ffmpeg
-numpy
+ffmpeg-python
 torch
-torchaudio
-decorator==4.4.2
+numpy
