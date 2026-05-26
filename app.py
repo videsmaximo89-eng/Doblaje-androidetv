@@ -31,4 +31,3 @@ if video_file and st.button("Empezar Doblaje"):
         st.video("video_doblado.mp4")
         with open("video_doblado.mp4", "rb") as file:
             st.download_button("Descargar Video Doblado", file, "video_listo.mp4")
-
